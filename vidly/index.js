@@ -14,8 +14,30 @@ const error = require('./middleware/error');
 const express = require('express');
 const app = express();
 
-winston.add(winston.transports.File, { filename: 'logfile.log' });
-winston.add(winston.transports.MongoDB, { db: "mongodb://localhost/vidly", level: 'error'});
+// Handling Unhandled Exceptions. This works with only synchronous code
+process.on('uncaughtException', (ex) => {
+    console.log("We got an uncaught exception");
+    winston.error(ex.message, ex);
+    process.exit(1);
+});
+
+// Handling uncaught promises.
+process.on('unhandledRejection', (ex) => {
+    console.log("We got an unhandled rejection");
+    winston.error(ex.message, ex);
+    process.exit(1);
+});
+
+// winston.add(winston.transports.File, { filename: 'logfile.log' });
+// winston.add(winston.transports.MongoDB, { db: "mongodb://localhost/vidly", level: 'error'});
+
+// Example of an unhandled exception
+throw new Error("Something failed during startup");
+
+// Example of a rejected Promise (Result of an async operation like a call to database or remote http service
+const p = Promise.reject(new Error("Something failed miserably"));
+p.then(() => console.log("Done"));
+
 
 if (!config.get('jwtPrivateKey')) {
     console.error('FATAL ERROR: jwtPrivateKey is not defined');
